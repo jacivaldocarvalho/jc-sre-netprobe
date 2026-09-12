@@ -11,8 +11,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 
+
 authors = [
-    { name = "Jacivaldo Carvalho" }
+    { name = "Jacivaldo Carvalho", email = "jacivaldocarvalho@gmail.com" }
 ]
 
 keywords = [
@@ -33,6 +34,19 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: System :: Networking",
 ]
+
+
+dependencies = [
+    "httpx>=0.27,<1",
+]
+
+[project.scripts]
+jc-sre-netprobe = "jc_sre_netprobe.cli:main"
+
+[project.urls]
+Homepage = "https://jacivaldocarvalho.com"
+Repository = "https://github.com/jacivaldocarvalho/jc-sre-netprobe"
+Issues = "https://github.com/jacivaldocarvalho/jc-sre-netprobe/issues"
 
 
 [project.optional-dependencies]
@@ -60,3 +74,4 @@ line-length = 88
 [tool.mypy]
 python_version = "3.11"
 strict = true
+
