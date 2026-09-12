@@ -1,4 +1,4 @@
-# jc-sre-netprobe
+# JC SRE NETPROBE
 
 [![PyPI](https://img.shields.io/pypi/v/jc-sre-netprobe)](https://pypi.org/project/jc-sre-netprobe/)
 [![Python](https://img.shields.io/pypi/pyversions/jc-sre-netprobe)](https://pypi.org/project/jc-sre-netprobe/)
