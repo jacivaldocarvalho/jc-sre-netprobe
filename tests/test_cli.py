@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from pytest import CaptureFixture
 
-from jc_sre_netprobe import HTTPCheckResult, TLSCheckResult
+from jc_sre_netprobe import DNSCheckResult, HTTPCheckResult, NetworkInfo, TLSCheckResult
 from jc_sre_netprobe.cli import main
 from jc_sre_netprobe.tcp import TCPCheckResult
 
@@ -288,3 +288,136 @@ def test_cli_invalid_http_url() -> None:
             assert exc.code == 2
         else:
             raise AssertionError("Expected SystemExit")
+
+def test_cli_tcp_success_exit_code() -> None:
+    result = TCPCheckResult(
+        host="example.com",
+        port=443,
+        reachable=True,
+        latency_ms=10.0,
+        error=None,
+    )
+
+    with (
+        patch(
+            "sys.argv",
+            ["jc-sre-netprobe", "tcp", "example.com", "443"],
+        ),
+        patch(
+            "jc_sre_netprobe.cli.tcp_check",
+            return_value=result,
+        ),
+    ):
+        assert main() == 0
+
+
+def test_cli_tcp_failure_exit_code() -> None:
+    result = TCPCheckResult(
+        host="example.com",
+        port=443,
+        reachable=False,
+        latency_ms=None,
+        error="Connection refused",
+    )
+
+    with (
+        patch(
+            "sys.argv",
+            ["jc-sre-netprobe", "tcp", "example.com", "443"],
+        ),
+        patch(
+            "jc_sre_netprobe.cli.tcp_check",
+            return_value=result,
+        ),
+    ):
+        assert main() == 1
+
+def test_cli_dns_failure_exit_code() -> None:
+    result = DNSCheckResult(
+        hostname="invalid.example",
+        addresses=[],
+        resolved=False,
+        error="Name resolution failed",
+    )
+
+    with (
+        patch(
+            "sys.argv",
+            ["jc-sre-netprobe", "dns", "invalid.example"],
+        ),
+        patch(
+            "jc_sre_netprobe.cli.dns_check",
+            return_value=result,
+        ),
+    ):
+        assert main() == 1
+
+
+def test_cli_http_failure_exit_code() -> None:
+    result = HTTPCheckResult(
+        url="https://example.com",
+        status_code=500,
+        healthy=False,
+        latency_ms=10.0,
+        error=None,
+    )
+
+    with (
+        patch(
+            "sys.argv",
+            ["jc-sre-netprobe", "http", "https://example.com"],
+        ),
+        patch(
+            "jc_sre_netprobe.cli.http_check",
+            return_value=result,
+        ),
+    ):
+        assert main() == 1
+
+
+def test_cli_tls_failure_exit_code() -> None:
+    result = TLSCheckResult(
+        host="example.com",
+        port=443,
+        valid=False,
+        expires_at=None,
+        days_remaining=None,
+        issuer=None,
+        subject=None,
+        error="Certificate verification failed",
+    )
+
+    with (
+        patch(
+            "sys.argv",
+            ["jc-sre-netprobe", "tls", "example.com"],
+        ),
+        patch(
+            "jc_sre_netprobe.cli.tls_check",
+            return_value=result,
+        ),
+    ):
+        assert main() == 1
+
+def test_cli_network_success_exit_code() -> None:
+    result = NetworkInfo(
+        network="192.168.1.0",
+        prefix_length=24,
+        netmask="255.255.255.0",
+        broadcast="192.168.1.255",
+        total_addresses=256,
+        ip_version=4,
+        is_private=True,
+    )
+
+    with (
+        patch(
+            "sys.argv",
+            ["jc-sre-netprobe", "network", "192.168.1.0/24"],
+        ),
+        patch(
+            "jc_sre_netprobe.cli.network_info",
+            return_value=result,
+        ),
+    ):
+        assert main() == 0

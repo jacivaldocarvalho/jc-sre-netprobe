@@ -41,7 +41,7 @@ dependencies = [
 ]
 
 [project.scripts]
-jc-sre-netprobe = "jc_sre_netprobe.cli:main"
+jc-sre-netprobe = "jc_sre_netprobe.cli:cli"
 
 [project.urls]
 Homepage = "https://jacivaldocarvalho.com"
