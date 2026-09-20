@@ -4,14 +4,20 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import asdict, is_dataclass
-from typing import Protocol
+from dataclasses import asdict
 
-from jc_sre_netprobe import dns_check, http_check, network_info, tcp_check
-
-
-class _CheckResult(Protocol):
-    """Contrato estrutural dos resultados (vazio: aceita qualquer tipo)."""
+from jc_sre_netprobe import (
+    DNSCheckResult,
+    HTTPCheckResult,
+    NetworkInfo,
+    TCPCheckResult,
+    TLSCheckResult,
+    dns_check,
+    http_check,
+    network_info,
+    tcp_check,
+    tls_check,
+)
 
 
 def main() -> None:
@@ -41,9 +47,23 @@ def main() -> None:
     network_parser = subparsers.add_parser("network")
     network_parser.add_argument("cidr")
 
+    tls_parser = subparsers.add_parser("tls")
+    tls_parser.add_argument("host")
+    tls_parser.add_argument(
+        "--port",
+        type=int,
+        default=443,
+    )
+
     args = parser.parse_args()
 
-    result: _CheckResult
+    result: (
+    TCPCheckResult
+    | DNSCheckResult
+    | HTTPCheckResult
+    | NetworkInfo
+    | TLSCheckResult
+    )
 
     if args.command == "tcp":
         result = tcp_check(args.host, args.port)
@@ -51,11 +71,12 @@ def main() -> None:
         result = dns_check(args.hostname)
     elif args.command == "http":
         result = http_check(args.url)
-    else:
+    elif args.command == "network":
         result = network_info(args.cidr)
+    else:
+        result = tls_check(args.host, args.port)
 
     if args.json:
-        assert is_dataclass(result) and not isinstance(result, type)
         print(json.dumps(asdict(result), indent=2))
     else:
         print(result)
