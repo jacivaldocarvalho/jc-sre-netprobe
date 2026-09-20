@@ -71,7 +71,7 @@ def valid_http_url(value: str) -> str:
 
     return value
 
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser(
         prog="jc-sre-netprobe",
         description="Network health checks for Telecom, DevOps and SRE.",
@@ -166,3 +166,22 @@ def main() -> None:
         print(json.dumps(asdict(result), indent=2))
     else:
         print(result)
+
+    if isinstance(result, TCPCheckResult):
+        return 0 if result.reachable else 1
+
+    if isinstance(result, DNSCheckResult):
+        return 0 if result.resolved else 1
+
+    if isinstance(result, HTTPCheckResult):
+        return 0 if result.healthy else 1
+
+    if isinstance(result, TLSCheckResult):
+        return 0 if result.valid else 1
+
+    return 0
+
+def cli() -> None:
+    """Run the command-line interface."""
+
+    raise SystemExit(main())
