@@ -38,11 +38,23 @@ def main() -> None:
     tcp_parser.add_argument("host")
     tcp_parser.add_argument("port", type=int)
 
+    tcp_parser.add_argument(
+    "--timeout",
+    type=float,
+    default=3.0,
+    )
+
     dns_parser = subparsers.add_parser("dns")
     dns_parser.add_argument("hostname")
 
     http_parser = subparsers.add_parser("http")
     http_parser.add_argument("url")
+
+    http_parser.add_argument(
+    "--timeout",
+    type=float,
+    default=5.0,
+    )
 
     network_parser = subparsers.add_parser("network")
     network_parser.add_argument("cidr")
@@ -53,6 +65,12 @@ def main() -> None:
         "--port",
         type=int,
         default=443,
+    )
+
+    tls_parser.add_argument(
+    "--timeout",
+    type=float,
+    default=5.0,
     )
 
     args = parser.parse_args()
@@ -66,15 +84,26 @@ def main() -> None:
     )
 
     if args.command == "tcp":
-        result = tcp_check(args.host, args.port)
+        result = tcp_check(
+            args.host,
+            args.port,
+            timeout=args.timeout,
+        )
     elif args.command == "dns":
         result = dns_check(args.hostname)
     elif args.command == "http":
-        result = http_check(args.url)
+        result = http_check(
+            args.url,
+            timeout=args.timeout,
+        )
     elif args.command == "network":
         result = network_info(args.cidr)
     else:
-        result = tls_check(args.host, args.port)
+        result = tls_check(
+            args.host,
+            args.port,
+            timeout=args.timeout,
+        )
 
     if args.json:
         print(json.dumps(asdict(result), indent=2))

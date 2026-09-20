@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from pytest import CaptureFixture
 
-from jc_sre_netprobe import TLSCheckResult
+from jc_sre_netprobe import HTTPCheckResult, TLSCheckResult
 from jc_sre_netprobe.cli import main
 from jc_sre_netprobe.tcp import TCPCheckResult
 
@@ -86,4 +86,98 @@ def test_cli_tls_json(
     mock_tls_check.assert_called_once_with(
         "example.com",
         443,
+        timeout=5.0,
+    )
+
+@patch("jc_sre_netprobe.cli.tcp_check")
+def test_cli_tcp_custom_timeout(
+    mock_tcp_check: MagicMock,
+) -> None:
+    mock_tcp_check.return_value = TCPCheckResult(
+        host="example.com",
+        port=443,
+        reachable=True,
+        latency_ms=10.0,
+    )
+
+    with patch(
+        "sys.argv",
+        [
+            "jc-sre-netprobe",
+            "tcp",
+            "example.com",
+            "443",
+            "--timeout",
+            "2.5",
+        ],
+    ):
+        main()
+
+    mock_tcp_check.assert_called_once_with(
+        "example.com",
+        443,
+        timeout=2.5,
+    )
+
+
+@patch("jc_sre_netprobe.cli.http_check")
+def test_cli_http_custom_timeout(
+    mock_http_check: MagicMock,
+) -> None:
+
+    mock_http_check.return_value = HTTPCheckResult(
+        url="https://example.com",
+        status_code=200,
+        healthy=True,
+        latency_ms=10.0,
+    )
+
+    with patch(
+        "sys.argv",
+        [
+            "jc-sre-netprobe",
+            "http",
+            "https://example.com",
+            "--timeout",
+            "3.5",
+        ],
+    ):
+        main()
+
+    mock_http_check.assert_called_once_with(
+        "https://example.com",
+        timeout=3.5,
+    )
+
+
+@patch("jc_sre_netprobe.cli.tls_check")
+def test_cli_tls_custom_timeout(
+    mock_tls_check: MagicMock,
+) -> None:
+    mock_tls_check.return_value = TLSCheckResult(
+        host="example.com",
+        port=443,
+        valid=True,
+        expires_at="2030-12-31T23:59:59+00:00",
+        days_remaining=100,
+        issuer="commonName=Example CA",
+        subject="commonName=example.com",
+    )
+
+    with patch(
+        "sys.argv",
+        [
+            "jc-sre-netprobe",
+            "tls",
+            "example.com",
+            "--timeout",
+            "4.5",
+        ],
+    ):
+        main()
+
+    mock_tls_check.assert_called_once_with(
+        "example.com",
+        443,
+        timeout=4.5,
     )
