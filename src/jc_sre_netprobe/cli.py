@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import json
 from dataclasses import asdict
+from urllib.parse import urlparse
 
 from jc_sre_netprobe import (
     DNSCheckResult,
@@ -19,6 +21,55 @@ from jc_sre_netprobe import (
     tls_check,
 )
 
+
+def valid_port(value: str) -> int:
+    """Validate a TCP port number."""
+
+    port = int(value)
+
+    if not 1 <= port <= 65535:
+        raise argparse.ArgumentTypeError(
+            "port must be between 1 and 65535"
+        )
+
+    return port
+
+
+def positive_timeout(value: str) -> float:
+    """Validate a positive timeout value."""
+
+    timeout = float(value)
+
+    if timeout <= 0:
+        raise argparse.ArgumentTypeError(
+            "timeout must be greater than 0"
+        )
+
+    return timeout
+
+def valid_cidr(value: str) -> str:
+    """Validate an IPv4 or IPv6 network."""
+
+    try:
+        ipaddress.ip_network(value, strict=False)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "invalid IPv4 or IPv6 network"
+        ) from exc
+
+    return value
+
+def valid_http_url(value: str) -> str:
+    """Validate an HTTP or HTTPS URL."""
+
+    parsed = urlparse(value)
+
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise argparse.ArgumentTypeError(
+            "URL must use http:// or https:// and include a host"
+        )
+
+    return value
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -36,11 +87,11 @@ def main() -> None:
 
     tcp_parser = subparsers.add_parser("tcp")
     tcp_parser.add_argument("host")
-    tcp_parser.add_argument("port", type=int)
+    tcp_parser.add_argument("port", type=valid_port)
 
     tcp_parser.add_argument(
     "--timeout",
-    type=float,
+    type=positive_timeout,
     default=3.0,
     )
 
@@ -48,28 +99,34 @@ def main() -> None:
     dns_parser.add_argument("hostname")
 
     http_parser = subparsers.add_parser("http")
-    http_parser.add_argument("url")
+    http_parser.add_argument(
+        "url",
+        type=valid_http_url,
+    )
 
     http_parser.add_argument(
     "--timeout",
-    type=float,
+    type=positive_timeout,
     default=5.0,
     )
 
     network_parser = subparsers.add_parser("network")
-    network_parser.add_argument("cidr")
+    network_parser.add_argument(
+        "cidr",
+        type=valid_cidr,
+    )
 
     tls_parser = subparsers.add_parser("tls")
     tls_parser.add_argument("host")
     tls_parser.add_argument(
         "--port",
-        type=int,
+        type=valid_port,
         default=443,
     )
 
     tls_parser.add_argument(
     "--timeout",
-    type=float,
+    type=positive_timeout,
     default=5.0,
     )
 

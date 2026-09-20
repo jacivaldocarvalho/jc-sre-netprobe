@@ -181,3 +181,110 @@ def test_cli_tls_custom_timeout(
         443,
         timeout=4.5,
     )
+
+def test_cli_invalid_tcp_port() -> None:
+    with patch(
+        "sys.argv",
+        [
+            "jc-sre-netprobe",
+            "tcp",
+            "example.com",
+            "70000",
+        ],
+    ):
+        try:
+            main()
+        except SystemExit as exc:
+            assert exc.code == 2
+        else:
+            raise AssertionError("Expected SystemExit")
+
+
+def test_cli_invalid_tls_port() -> None:
+    with patch(
+        "sys.argv",
+        [
+            "jc-sre-netprobe",
+            "tls",
+            "example.com",
+            "--port",
+            "0",
+        ],
+    ):
+        try:
+            main()
+        except SystemExit as exc:
+            assert exc.code == 2
+        else:
+            raise AssertionError("Expected SystemExit")
+
+
+def test_cli_invalid_tcp_timeout() -> None:
+    with patch(
+        "sys.argv",
+        [
+            "jc-sre-netprobe",
+            "tcp",
+            "example.com",
+            "443",
+            "--timeout",
+            "0",
+        ],
+    ):
+        try:
+            main()
+        except SystemExit as exc:
+            assert exc.code == 2
+        else:
+            raise AssertionError("Expected SystemExit")
+
+
+def test_cli_invalid_http_timeout() -> None:
+    with patch(
+        "sys.argv",
+        [
+            "jc-sre-netprobe",
+            "http",
+            "https://example.com",
+            "--timeout",
+            "-1",
+        ],
+    ):
+        try:
+            main()
+        except SystemExit as exc:
+            assert exc.code == 2
+        else:
+            raise AssertionError("Expected SystemExit")
+
+def test_cli_invalid_cidr() -> None:
+    with patch(
+        "sys.argv",
+        [
+            "jc-sre-netprobe",
+            "network",
+            "192.168.1.500/24",
+        ],
+    ):
+        try:
+            main()
+        except SystemExit as exc:
+            assert exc.code == 2
+        else:
+            raise AssertionError("Expected SystemExit")
+
+def test_cli_invalid_http_url() -> None:
+    with patch(
+        "sys.argv",
+        [
+            "jc-sre-netprobe",
+            "http",
+            "ftp://example.com",
+        ],
+    ):
+        try:
+            main()
+        except SystemExit as exc:
+            assert exc.code == 2
+        else:
+            raise AssertionError("Expected SystemExit")
