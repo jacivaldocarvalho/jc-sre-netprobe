@@ -1,7 +1,9 @@
 import json
 import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
 from pytest import CaptureFixture
 
 from jc_sre_netprobe import DNSCheckResult, HTTPCheckResult, NetworkInfo, TLSCheckResult
@@ -421,3 +423,128 @@ def test_cli_network_success_exit_code() -> None:
         ),
     ):
         assert main() == 0
+
+@pytest.mark.parametrize("json_position", ["none", "before", "after"])
+def test_cli_run_success(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    json_position: str,
+) -> None:
+    config_path = tmp_path / "checks.yaml"
+    config_path.write_text(
+        "checks:\n"
+        "  - name: local-network\n"
+        "    type: network\n"
+        "    cidr: 192.168.1.0/24\n",
+        encoding="utf-8",
+    )
+
+    args = ["run", str(config_path)]
+
+    if json_position == "before":
+        args = ["--json", *args]
+    elif json_position == "after":
+        args.append("--json")
+
+    monkeypatch.setattr(sys, "argv", ["jc-sre-netprobe", *args])
+
+    assert main() == 0
+
+    output = capsys.readouterr()
+
+    if json_position == "none":
+        assert "[OK] local-network (network)" in output.out
+        assert "Healthy: 1" in output.out
+    else:
+        payload = json.loads(output.out)
+        assert payload["total"] == 1
+        assert payload["healthy"] == 1
+        assert payload["failed"] == 0
+        assert payload["results"][0]["name"] == "local-network"
+
+
+def test_cli_run_failed_check(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    config_path = tmp_path / "checks.yaml"
+    config_path.write_text(
+        "checks:\n"
+        "  - name: invalid-http\n"
+        "    type: http\n"
+        "    url: https://example.com\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        "jc_sre_netprobe.runner.http_check",
+        lambda url, timeout: HTTPCheckResult(
+            url=url,
+            status_code=503,
+            healthy=False,
+            latency_ms=10.0,
+            error=None,
+        ),
+    )
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["jc-sre-netprobe", "run", str(config_path)],
+    )
+
+    assert main() == 1
+
+    output = capsys.readouterr()
+    assert "[FAIL] invalid-http (http)" in output.out
+    assert "Failed:  1" in output.out
+
+
+@pytest.mark.parametrize(
+    "yaml_content",
+    [
+        "checks: []\n",
+        "checks:\n  - name: invalid\n    type: unknown\n",
+        "invalid: [\n",
+    ],
+)
+def test_cli_run_invalid_config(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    yaml_content: str,
+) -> None:
+    config_path = tmp_path / "invalid.yaml"
+    config_path.write_text(yaml_content, encoding="utf-8")
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["jc-sre-netprobe", "run", str(config_path)],
+    )
+
+    assert main() == 2
+
+    output = capsys.readouterr()
+    assert "Configuration error:" in output.err
+
+
+def test_cli_run_missing_file(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    missing_path = tmp_path / "missing.yaml"
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["jc-sre-netprobe", "run", str(missing_path)],
+    )
+
+    assert main() == 2
+
+    output = capsys.readouterr()
+    assert "Configuration error:" in output.err
