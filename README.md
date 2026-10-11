@@ -1,7 +1,7 @@
 
 # JC SRE NETPROBE
 
-[![PyPI](https://img.shields.io/pypi/v/jc-sre-netprobe)](https://pypi.org/project/jc-sre-netprobe/)
+[![PyPI](https://img.shields.io/pypi/v/jc-sre-netprobe?cacheSeconds=300&v=2)](https://pypi.org/project/jc-sre-netprobe/)
 [![Python](https://img.shields.io/pypi/pyversions/jc-sre-netprobe)](https://pypi.org/project/jc-sre-netprobe/)
 [![CI](https://github.com/jacivaldocarvalho/jc-sre-netprobe/actions/workflows/ci.yml/badge.svg)](https://github.com/jacivaldocarvalho/jc-sre-netprobe/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/jacivaldocarvalho/jc-sre-netprobe)](LICENSE)
