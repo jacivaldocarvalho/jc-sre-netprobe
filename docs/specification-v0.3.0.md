@@ -2,9 +2,10 @@
 
 **Project:** jc-sre-netprobe  
 **Version:** 0.3.0  
-**Status:** Planned  
+**Status:** Implemented — Release Preparation
 **Document type:** Technical Design Specification  
 **Previous version:** v0.2.0
+
 
 ## 1. Overview
 
@@ -352,46 +353,46 @@ flowchart TD
     I --> J["Return BulkResult"]
 ```
 
+
 ## 11. Result Model
 
-The runner must expose structured results.
+The bulk runner exposes structured, immutable result models.
 
 ### 11.1 Individual Result
 
-Proposed model: `CheckExecutionResult`.
-
-Fields:
+**Implemented model:** `CheckResult`
 
 | Field | Type | Description |
 |---|---|---|
 | `name` | string | Configured check name |
 | `type` | string | Check type |
 | `healthy` | boolean | Normalized health status |
-| `result` | object or null | Underlying probe result |
+| `details` | object or null | Underlying probe result information |
 | `error` | string or null | Unexpected execution error |
 
-Handled probe failures remain represented by their existing dataclass results.
+Handled operational failures are represented using the existing probe result information.
 
-Unexpected runner-level exceptions are captured in `error` and mark the individual check unhealthy.
+Unexpected runner-level exceptions are captured in `error` and mark the individual check as unhealthy.
 
 ### 11.2 Aggregated Result
 
-Proposed model: `BulkResult`.
-
-Fields:
+**Implemented model:** `BulkResult`
 
 | Field | Type |
 |---|---|
 | `total` | integer |
 | `healthy` | integer |
 | `failed` | integer |
-| `results` | list |
+| `results` | collection of `CheckResult` |
 
 The following invariant must always hold:
 
 ```text
 total = healthy + failed
 ```
+
+Results preserve the original configuration order.
+
 
 ## 12. Health Mapping
 
@@ -425,28 +426,40 @@ The `--json` flag remains a global argument.
 
 The `run` command must use the configuration loader and bulk runner rather than directly implementing probe logic.
 
+
 ## 14. Human-Readable Output
 
-Example:
+The CLI presents individual check statuses followed by an aggregated summary.
+
+Illustrative output:
 
 ```text
-NAME           TYPE      STATUS   LATENCY
-gateway-tcp    TCP       OK       12.4 ms
-public-dns     DNS       OK       -
-website-http   HTTP      OK       180.5 ms
-website-tls    TLS       OK       -
-subnet-info    NETWORK   OK       -
+Bulk Check Results
+------------------
+[OK] gateway-tcp (tcp)
+[OK] public-dns (dns)
+[OK] website-http (http)
+[OK] website-tls (tls)
+[OK] subnet-info (network)
 
-Summary: 5 checks | 5 healthy | 0 failed
+Total:   5
+Healthy: 5
+Failed:  0
 ```
 
-Latency values are taken from the underlying probe result when available.
+Failed checks are marked with `[FAIL]`.
 
-The CLI must not invent latency measurements for DNS, TLS or Network checks.
+When an execution error is available, the CLI displays an additional error line.
+
+The human-readable output does not currently provide a latency column. Probe-specific details remain available through JSON output.
+
+
 
 ## 15. JSON Output
 
-Example:
+The `run` command serializes the aggregated result using the implemented `BulkResult` and `CheckResult` models.
+
+Illustrative output:
 
 ```json
 {
@@ -455,38 +468,33 @@ Example:
   "failed": 1,
   "results": [
     {
-      "name": "gateway-tcp",
-      "type": "tcp",
+      "name": "local-network",
+      "type": "network",
       "healthy": true,
-      "result": {
-        "host": "192.168.1.1",
-        "port": 443,
-        "reachable": true,
-        "latency_ms": 12.4,
-        "error": null
-      },
+      "details": {},
       "error": null
     },
     {
-      "name": "website-http",
-      "type": "http",
+      "name": "unavailable-service",
+      "type": "tcp",
       "healthy": false,
-      "result": {
-        "url": "https://example.com",
-        "status_code": 503,
-        "healthy": false,
-        "latency_ms": 180.5,
-        "error": null
-      },
+      "details": {},
       "error": null
     }
   ]
 }
 ```
 
-The example illustrates the output schema and is not a claim of actual probe results.
+The `details` objects above are abbreviated for illustration. Actual output contains probe-specific result fields.
 
 JSON output must remain machine-readable and contain no decorative terminal text.
+
+Both command forms are supported:
+
+```bash
+jc-sre-netprobe --json run checks.yaml
+jc-sre-netprobe run checks.yaml --json
+```
 
 ## 16. Exit Codes
 
@@ -638,42 +646,60 @@ Version 0.3.0 is considered complete when:
 11. Automated tests and quality gates pass.
 12. Documentation and changelog are updated.
 
+
 ## 23. Implementation Phases
 
 ### Phase 1 — Configuration
 
-- Add PyYAML dependency.
-- Implement `config.py`.
-- Add configuration models.
-- Implement YAML validation.
-- Add `test_config.py`.
+**Status:** Completed
+
+- Added PyYAML dependency.
+- Implemented `config.py`.
+- Added immutable configuration models.
+- Implemented YAML loading and validation.
+- Added automated configuration tests.
+- Integrated through Pull Request #12.
 
 ### Phase 2 — Bulk Runner
 
-- Implement `runner.py`.
-- Add concurrent execution.
-- Normalize health results.
-- Aggregate results.
-- Add `test_runner.py`.
+**Status:** Completed
+
+- Implemented `runner.py`.
+- Added concurrent execution using `ThreadPoolExecutor`.
+- Normalized individual health results.
+- Added aggregated result models.
+- Preserved configuration order.
+- Implemented individual failure isolation.
+- Added automated runner tests.
+- Integrated through Pull Request #13.
 
 ### Phase 3 — CLI Integration
 
-- Add `run` command.
-- Add text and JSON output.
-- Implement aggregated exit codes.
-- Extend CLI tests.
+**Status:** Completed
+
+- Added `run` command.
+- Implemented text and JSON output.
+- Added aggregated exit codes.
+- Added example YAML configuration.
+- Extended CLI tests.
+- Integrated through Pull Request #14.
 
 ### Phase 4 — Release Preparation
 
-- Update README.
+**Status:** In progress
+
+- Update README documentation.
 - Update CHANGELOG.
-- Execute quality gates.
-- Validate package build.
-- Prepare release branch.
-- Publish v0.3.0.
+- Align technical specification with implementation.
+- Update package version.
+- Execute final quality gates.
+- Validate distribution artifacts.
+- Integrate release into `main`.
+- Create release tag.
+- Publish v0.3.0 to PyPI.
 
 ---
 
-**Source of truth:** This specification defines the planned behavior of v0.3.0.
+**Source of truth:** This document records the v0.3.0 technical design and its implemented behavior.
 
-**Documentation note:** Unlike the v0.1.0 and v0.2.0 specifications, this document is written before implementation. Any architectural changes made during development must be reflected in the specification before release.
+**Documentation note:** The specification was initially written before implementation. The result models, CLI output and implementation status have been updated to reflect the delivered functionality.
