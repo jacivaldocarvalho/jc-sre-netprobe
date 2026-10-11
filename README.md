@@ -116,7 +116,7 @@ To install a specific version after its release:
 pip install jc-sre-netprobe==0.3.0
 ```
 
-The bulk execution functionality described below is introduced in v0.3.0. Until that version is published, it can be tested from the development branch.
+Bulk execution is available starting with v0.3.0, published on PyPI.
 
 ## Usage
 
@@ -517,7 +517,7 @@ Example GitHub Actions step:
   run: jc-sre-netprobe run deployment-checks.yaml
 ```
 
-For v0.3.0 functionality, ensure the pipeline installs version 0.3.0 or later once published.
+For bulk execution functionality, ensure the pipeline installs jc-sre-netprobe version 0.3.0 or later.
 
 ### 5. JSON Integration with Automation
 
