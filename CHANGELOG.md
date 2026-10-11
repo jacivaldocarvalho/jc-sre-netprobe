@@ -1,6 +1,47 @@
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [0.3.0] - Unreleased
+
+### Added
+
+- YAML-based configuration for defining multiple network and service checks.
+- Configuration loading and validation through `config.py`.
+- Support for TCP, DNS, HTTP, TLS and Network checks in YAML configurations.
+- Validation of required fields, check types, ports, timeouts, URLs and CIDR networks.
+- Detection of duplicate check names and YAML mapping keys.
+- Rejection of unknown configuration properties.
+- Concurrent bulk check execution using `ThreadPoolExecutor`.
+- Configurable concurrency through the `max_workers` parameter.
+- Individual check results and aggregated health summaries.
+- Structured bulk execution results through `CheckResult` and `BulkResult`.
+- New `run` CLI command for executing checks from YAML configuration files.
+- Human-readable output for bulk execution.
+- JSON output for bulk execution, supporting both global and command-level `--json` flags.
+- Aggregated CLI exit codes:
+  - `0` when all checks are healthy.
+  - `1` when one or more checks are unhealthy.
+  - `2` for invalid CLI usage or configuration.
+- Example YAML configuration in `examples/checks.yaml`.
+- Automated tests for YAML configuration, concurrent execution and CLI integration.
+- PyYAML runtime dependency.
+
+### Changed
+
+- Extended the CLI with configuration-driven bulk execution while preserving existing commands.
+- Added bounded concurrent execution of independent checks.
+- Preserved configuration order in aggregated results.
+- Isolated individual check failures to prevent interruption of other checks.
+- Expanded README documentation with YAML configuration, bulk execution and operational examples.
+
+### Quality
+
+- 106 automated tests passing.
+- 97% overall test coverage.
+- Ruff and Mypy validation passing.
+- GitHub Actions CI passing on Python 3.11, 3.12 and 3.13.
 
 ## [0.2.0] - 2026-09-20
 

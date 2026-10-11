@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jc-sre-netprobe"
-version = "0.2.0"
+version = "0.3.0"
 description = "Network health checks and utilities for Telecom, DevOps and SRE."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -38,6 +38,7 @@ classifiers = [
 
 dependencies = [
     "httpx>=0.27,<1",
+    "PyYAML>=6.0,<7",
 ]
 
 [project.scripts]
@@ -57,6 +58,7 @@ dev = [
     "pytest-cov>=5,<7",
     "ruff>=0.12,<1",
     "twine>=6,<7",
+    "types-PyYAML>=6.0,<7",
 ]
 
 
