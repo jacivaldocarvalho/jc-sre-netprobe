@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import ipaddress
 import json
+import sys
 from dataclasses import asdict
 from urllib.parse import urlparse
 
@@ -20,6 +21,8 @@ from jc_sre_netprobe import (
     tcp_check,
     tls_check,
 )
+from jc_sre_netprobe.config import ConfigError, load_config
+from jc_sre_netprobe.runner import run_checks
 
 
 def valid_port(value: str) -> int:
@@ -85,6 +88,23 @@ def main() -> int:
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    run_parser = subparsers.add_parser(
+        "run",
+        help="Execute multiple checks from a YAML configuration file.",
+    )
+
+    run_parser.add_argument(
+        "config",
+        help="Path to the YAML configuration file.",
+    )
+
+    run_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="run_json",
+        help="Return bulk check results in JSON format.",
+    )
+
     tcp_parser = subparsers.add_parser("tcp")
     tcp_parser.add_argument("host")
     tcp_parser.add_argument("port", type=valid_port)
@@ -131,6 +151,35 @@ def main() -> int:
     )
 
     args = parser.parse_args()
+
+    if args.command == "run":
+        try:
+            config = load_config(args.config)
+        except ConfigError as exc:
+            print(f"Configuration error: {exc}", file=sys.stderr)
+            return 2
+
+        bulk_result = run_checks(config)
+
+        if args.json or args.run_json:
+            print(json.dumps(asdict(bulk_result), indent=2))
+        else:
+            print("Bulk Check Results")
+            print("------------------")
+
+            for check in bulk_result.results:
+                status = "OK" if check.healthy else "FAIL"
+                print(f"[{status}] {check.name} ({check.type})")
+
+                if check.error:
+                    print(f"       Error: {check.error}")
+
+            print()
+            print(f"Total:   {bulk_result.total}")
+            print(f"Healthy: {bulk_result.healthy}")
+            print(f"Failed:  {bulk_result.failed}")
+
+        return 0 if bulk_result.failed == 0 else 1
 
     result: (
     TCPCheckResult
