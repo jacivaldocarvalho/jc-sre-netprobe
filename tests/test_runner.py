@@ -357,4 +357,3 @@ def test_run_checks_rejects_invalid_workers(
 
     with pytest.raises(ValueError, match="positive integer"):
         run_checks(config)
-
