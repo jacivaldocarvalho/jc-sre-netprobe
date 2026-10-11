@@ -6,7 +6,7 @@
 [![CI](https://github.com/jacivaldocarvalho/jc-sre-netprobe/actions/workflows/ci.yml/badge.svg)](https://github.com/jacivaldocarvalho/jc-sre-netprobe/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/jacivaldocarvalho/jc-sre-netprobe)](LICENSE)
 
-Network health checks and utilities for **Telecom, Networking, DevOps and SRE**.
+Network and service health checks for **Telecom infrastructure, Networking, DevOps and SRE**.
 
 ## Features
 
@@ -26,7 +26,12 @@ Network health checks and utilities for **Telecom, Networking, DevOps and SRE**.
 
 ## Use Cases
 
-`jc-sre-netprobe` provides network and service probes for troubleshooting, automation and basic availability checks across Networking, Telecom, DevOps and SRE environments.
+`jc-sre-netprobe` provides network and service probes for troubleshooting,
+automation and basic availability checks in IP-based infrastructures.
+
+It is designed for Networking, DevOps and SRE workflows, with applicability
+to telecommunications operators, internet service providers (ISPs),
+enterprise networks and cloud environments.
 
 ### SRE and DevOps
 
@@ -56,7 +61,14 @@ The exit code can be consumed by automation:
 * `1` — target is unhealthy or unavailable
 * `2` — invalid CLI usage, input or configuration
 
-### Networking and Telecom
+### Networking and Telecommunications Infrastructure
+
+The project focuses on IP networking and service-level checks that
+can support troubleshooting in enterprise networks, cloud environments
+and telecommunications infrastructures.
+
+It does not currently provide specialized optical, radio-frequency,
+routing telemetry or carrier-grade performance measurements.
 
 The probes support network troubleshooting by validating different components involved in service delivery:
 
